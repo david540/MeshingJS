@@ -1,4 +1,4 @@
-import * as THREE from 'three';	
+import * as THREE from 'three';
 import { SingletonPanel } from './panel.js'
 import { MeshOpe } from './mesh.js'
 import { OBJLoader } from './three.js/examples/jsm/loaders/OBJLoader.js';
@@ -23,7 +23,7 @@ function init() {
     scene = new THREE.Scene();
 
     scene.background = new THREE.Color( 0xa0a0a0 );
-	scene.fog = new THREE.Fog( 0xa0a0a0, 10, 500 );
+	   scene.fog = new THREE.Fog( 0xa0a0a0, 10, 500 );
 
     const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
     hemiLight.position.set( 0, 20, 0 );
@@ -35,7 +35,7 @@ function init() {
     const pointLight = new THREE.PointLight( 0xffffff, 0.8 );
     camera.add( pointLight );
     scene.add( camera );
-    
+
     const dirLight = new THREE.DirectionalLight( 0xffffff );
     dirLight.position.set( 3, 10, 10 );
     dirLight.castShadow = true;
@@ -60,7 +60,7 @@ function init() {
 
     const manager = new THREE.LoadingManager();
     const loader = new OBJLoader( manager );
-    
+
     loader.load( './js/three.js/examples/models/obj/emerald.obj', function ( obj ) {
         object = obj;
         object.position.x = 0; object.position.y = 0; object.position.z = 0;
@@ -81,24 +81,24 @@ function init() {
           dae_path = file.name;
         }
         const manager = new THREE.LoadingManager();
-        manager.setURLModifier(function (url, path) {	
+        manager.setURLModifier(function (url, path) {
           url = url.split('/');
           url = url[url.length - 1];
           if (extraFiles[url] !== undefined) {
             var blobURL = URL.createObjectURL(extraFiles[url]);
             console.log(blobURL); //Blob location created from files selected from file input
-            return blobURL;	
+            return blobURL;
           }return url;
         });
         const loader = new OBJLoader( manager );
         loader.load(dae_path, function ( obj ) {
             object = obj;
-            scene.remove(scene.children[scene.children.length - 1]); 
+            scene.remove(scene.children[scene.children.length - 1]);
             object.position.x = 0; object.position.y = 0; object.position.z = 0;
             const mesh = object.children[0].clone();
             meshOpe.reset(mesh);
             meshOpe.display(scene);
-        });           
+        });
     });
 
     renderer = new THREE.WebGLRenderer();
