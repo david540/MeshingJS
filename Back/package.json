@@ -1,0 +1,14 @@
+{
+    "name": "MeshParsing",
+    "version": "1.0.0",
+    "dependencies": {
+        "axios": "^0.21.1",
+        "body-parser": "^1.19.0",
+        "chalk": "^4.1.0",
+        "compression": "^1.7.4",
+        "consolidate": "^0.16.0",
+        "express": "^4.17.1",
+        "fs": "0.0.1-security",
+        "mustache": "^4.0.1"
+    }
+}
