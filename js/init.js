@@ -17,15 +17,43 @@ function init() {
 
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
     camera.position.z = 25;
+    //camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 100 );
+	//camera.position.set( - 1, 2, 3 );
 
     scene = new THREE.Scene();
 
-    const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
-    scene.add( ambientLight );
+    scene.background = new THREE.Color( 0xa0a0a0 );
+	scene.fog = new THREE.Fog( 0xa0a0a0, 10, 500 );
+
+    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+    hemiLight.position.set( 0, 20, 0 );
+    scene.add( hemiLight );
+
+   // const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
+   // scene.add( ambientLight );
 
     const pointLight = new THREE.PointLight( 0xffffff, 0.8 );
     camera.add( pointLight );
     scene.add( camera );
+    
+    const dirLight = new THREE.DirectionalLight( 0xffffff );
+    dirLight.position.set( 3, 10, 10 );
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.top = 2;
+    dirLight.shadow.camera.bottom = - 2;
+    dirLight.shadow.camera.left = - 2;
+    dirLight.shadow.camera.right = 2;
+    dirLight.shadow.camera.near = 0.1;
+    dirLight.shadow.camera.far = 40;
+    scene.add( dirLight );
+
+    // ground
+
+    const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 1000, 1000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
+    mesh.rotation.x = - Math.PI / 2;
+    mesh.receiveShadow = true;
+    scene.add( mesh );
+
 
     var object;
     var meshOpe;
@@ -33,22 +61,14 @@ function init() {
     const manager = new THREE.LoadingManager();
     const loader = new OBJLoader( manager );
     
-    loader.load( './three.js/examples/models/obj/emerald.obj', function ( obj ) {
+    loader.load( './js/three.js/examples/models/obj/emerald.obj', function ( obj ) {
         object = obj;
         object.position.x = 0; object.position.y = 0; object.position.z = 0;
         const mesh = object.children[0].clone();
         meshOpe = new MeshOpe(mesh);
         SingletonPanel.init(scene, meshOpe);
         meshOpe.display(scene);
-    }, onProgress, onError );
-
-    function onProgress( xhr ) {
-        if ( xhr.lengthComputable ) {
-            const percentComplete = xhr.loaded / xhr.total * 100;
-            console.log( 'model ' + Math.round( percentComplete, 2 ) + '% downloaded' );
-        }
-    }
-    function onError() {}
+    });
 
     document.querySelector('.inputfile').addEventListener('change', function(e){
         var dae_path;
@@ -78,7 +98,7 @@ function init() {
             const mesh = object.children[0].clone();
             meshOpe.reset(mesh);
             meshOpe.display(scene);
-        }, onProgress, onError );           
+        });           
     });
 
     renderer = new THREE.WebGLRenderer();
