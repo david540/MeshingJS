@@ -5,7 +5,7 @@ Quad mesh generation on given triangular mesh input with quadcover algorithm.
 
 Three js permits to modify by hand the frame field topology on the input tri mesh, to see in real time the impact on the output quadrilateral mesh.
 
-![image](https://user-images.githubusercontent.com/25902963/163730231-1445a3c6-37b0-40d0-b77b-f10a029b56ee.png)
+![image](https://user-images.githubusercontent.com/25902963/163735962-40a9e581-d2fc-4562-b194-4b16ca0197ec.png)
 
 ## To run the project: 
 start by running the server :
