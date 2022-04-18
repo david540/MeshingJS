@@ -7,6 +7,9 @@
 #include <stack>
 #include <array>
 #include <chrono>
+#include "math.h"
+
+#include "OpenNL_psm/OpenNL_psm.h"
 
 #define M_PI       3.14159265358979323846   // pi
 
@@ -142,10 +145,36 @@ void read_medit_format(const std::string& filename, std::vector<vec3>& verts_, s
 }
 
 struct Lstq{
-    Lstq(int N){}
-    void lock(int i, double val){}
-    void addLine(vector<pair<int, double>> co, double rhs){}
-    vector<double> solve() {return vector<double>();}
+    int N; 
+    int state;
+    NLContext context;
+    Lstq(int nN) : N(nN) {
+        context = nlNewContext();
+        nlSolverParameteri(NL_LEAST_SQUARES, NL_TRUE);
+        nlSolverParameteri(NL_NB_VARIABLES, NLint(nN));
+        nlBegin(NL_SYSTEM);
+        state = 0;
+    }
+    void lock(int i, double val){
+        if(state != 0) return;
+        nlSetVariable(i, val); nlLockVariable(i);
+    }
+    void addLine(vector<pair<int, double>> co, double rhs){
+        if(state == 0){ nlBegin(NL_MATRIX); state = 1; } else if(state != 1) return;
+        nlBegin(NL_ROW);
+        for(auto [i, w] : co) nlCoefficient(i, w);
+        nlEnd(NL_ROW);
+    }
+    vector<double> solve() {
+        vector<double> sol (N, 0) ;
+        if(state != 1) { prln("called solve to early"); return sol;}
+        nlEnd(NL_MATRIX);
+        nlEnd(NL_SYSTEM);
+        nlSolve();
+        FOR(i, N) sol[i] = nlGetVariable(i);
+        nlDeleteContext(context);
+        return sol;
+    }
 };
 
 vector<double> compute_FF_angles(const vector<vector<pair<int, double>>>& adj, const vector<pair<int, double>>& constraints){
@@ -177,7 +206,7 @@ vector<double> compute_FF_angles(const TriMesh& m, const TriConnectivity& tc){
     vector<vector<pair<int, double>>> adj(m.nf());
     vector<pair<int, double>> constraints;
     FOR(h, m.nh()) {
-        if(tc.opp(h) != -1) adj[h/3].push_back(make_pair(tc.opp(h), -c_ij(h)));
+        if(tc.opp(h) != -1) adj[h/3].push_back(make_pair(tc.opp(h)/3, -c_ij(h)));
         else constraints.push_back(make_pair(h/3, edge_angle_in_ref(h)));
     }
     return compute_FF_angles(adj, constraints);
