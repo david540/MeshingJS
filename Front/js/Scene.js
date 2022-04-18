@@ -31,7 +31,7 @@ class Scene {
   }
 
   initEventListeners() {
-    window.addEventListener('resize', this.onWindowResize);
+    window.addEventListener('resize', this.onWindowResize.bind(this));
     const fileInput = document.getElementById('file-upload-input');
     fileInput.onchange = (() => {
       const selectedFile = fileInput.files[0];
