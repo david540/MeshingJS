@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import {mergeVertices} from './GeometryUtils.js';
 import * as interfaceUtils from './interfaceUtils.js';
+import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper.js';
 
 class Mesh {
     constructor(path = './examples/emerald.obj') {
@@ -72,6 +73,8 @@ class Mesh {
         return interfaceUtils.CreateVectorDouble(this.mesh.geometry.getAttribute("position").array);
     }
 
+    createVertex
+
     extractFaceIndices()
     {
         if(!this.mesh)
@@ -84,7 +87,33 @@ class Mesh {
 
     computeFF() {
         console.log("Mesh indexes : ")
-        console.log(this.mesh.geometry.index)
+        let data = interfaceUtils.ExtractArray(Module.meshMagic(this.extractFaceIndices(), this.extractVertices()))
+        
+        let directionsArray = new Float32Array(data.slice(0, data.length/2))
+        let oppositeDirectionsArray = new Float32Array(data.slice(0, data.length/2).map(function(x) {return -x}))
+        let verticesArray = new Float32Array(data.slice(data.length/2))
+        
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute( 'position', new THREE.BufferAttribute( verticesArray, 3 ) );
+        geometry.setAttribute( 'normal', new THREE.BufferAttribute( directionsArray, 3 ) );
+        const material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+        const mesh = new THREE.Mesh( geometry, material )
+
+        const geometry2 = new THREE.BufferGeometry();
+        geometry2.setAttribute( 'position', new THREE.BufferAttribute( verticesArray, 3 ) );
+        geometry2.setAttribute( 'normal', new THREE.BufferAttribute( oppositeDirectionsArray, 3 ) );
+        const material2 = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+        const mesh2 = new THREE.Mesh( geometry2, material2 )
+        
+        let helpers = new THREE.Group()
+        let helper = new VertexNormalsHelper( mesh, 1, new THREE.Color(255, 0, 0), 3 );
+        helper.name = "frameField"
+        helpers.add(helper)
+        let helper2 = new VertexNormalsHelper( mesh2, 1, new THREE.Color(255, 0, 0), 3 );
+        helper2.name = "frameField"
+        helpers.add(helper2)
+
+        this.object.add(helpers)
     }
 }
 

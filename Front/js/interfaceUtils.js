@@ -17,7 +17,7 @@
  export function CreateVectorInt( array ){
     let vec = new Module.VectorInt();
     for (let i = 0; i < array.length; ++i)
-        vec.push_back(int(array[i]));
+        vec.push_back(array[i]);
     return vec;
 }
 

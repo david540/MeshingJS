@@ -11756,7 +11756,7 @@
 
 	const _vector1 = /*@__PURE__*/ new Vector3();
 	const _vector2 = /*@__PURE__*/ new Vector3();
-	const _normalMatrix = /*@__PURE__*/ new Matrix3();
+	const _normalMatrix$1 = /*@__PURE__*/ new Matrix3();
 
 	class Plane {
 
@@ -11919,7 +11919,7 @@
 
 		applyMatrix4( matrix, optionalNormalMatrix ) {
 
-			const normalMatrix = optionalNormalMatrix || _normalMatrix.getNormalMatrix( matrix );
+			const normalMatrix = optionalNormalMatrix || _normalMatrix$1.getNormalMatrix( matrix );
 
 			const referencePoint = this.coplanarPoint( _vector1 ).applyMatrix4( matrix );
 
@@ -45215,6 +45215,139 @@
 
 	}
 
+	/**
+	 * Create a double vector, the vector should be deleted by user
+	 * @param {Array} array data to copy into vector
+	 */
+	 function CreateVectorDouble( array ){
+	    let vec = new Module.VectorDouble();
+	    for (let i = 0; i < array.length; ++i)
+	        vec.push_back(array[i]);
+	    return vec;
+	}
+
+	/**
+	 * Create an Int vector, the vector should be deleted by user
+	 * @param {Array} array data to copy into vector
+	 */
+	 function CreateVectorInt( array ){
+	    let vec = new Module.VectorInt();
+	    for (let i = 0; i < array.length; ++i)
+	        vec.push_back(array[i]);
+	    return vec;
+	}
+
+	/**
+	 * Create an array from a vector
+	 * @param {VectorDouble} vector vector to extract data from
+	 */
+	 function ExtractArray( vector ){
+	    let array = [];
+	    for (let i = 0; i < vector.size(); ++i)
+	        array.push(vector.get(i));
+	    return array;
+	}
+
+	const _v1 = new Vector3();
+	const _v2 = new Vector3();
+	const _normalMatrix = new Matrix3();
+
+	class VertexNormalsHelper extends LineSegments {
+
+		constructor( object, size = 1, color = 0xff0000 ) {
+
+			let nNormals = 0;
+
+			const objGeometry = object.geometry;
+
+			if ( objGeometry && objGeometry.isGeometry ) {
+
+				console.error( 'THREE.VertexNormalsHelper no longer supports Geometry. Use BufferGeometry instead.' );
+				return;
+
+			} else if ( objGeometry && objGeometry.isBufferGeometry ) {
+
+				nNormals = objGeometry.attributes.normal.count;
+
+			}
+
+			//
+
+			const geometry = new BufferGeometry();
+
+			const positions = new Float32BufferAttribute( nNormals * 2 * 3, 3 );
+
+			geometry.setAttribute( 'position', positions );
+
+			super( geometry, new LineBasicMaterial( { color, toneMapped: false } ) );
+
+			this.object = object;
+			this.size = size;
+			this.type = 'VertexNormalsHelper';
+
+			//
+
+			this.matrixAutoUpdate = false;
+
+			this.update();
+
+		}
+
+		update() {
+
+			this.object.updateMatrixWorld( true );
+
+			_normalMatrix.getNormalMatrix( this.object.matrixWorld );
+
+			const matrixWorld = this.object.matrixWorld;
+
+			const position = this.geometry.attributes.position;
+
+			//
+
+			const objGeometry = this.object.geometry;
+
+			if ( objGeometry && objGeometry.isGeometry ) {
+
+				console.error( 'THREE.VertexNormalsHelper no longer supports Geometry. Use BufferGeometry instead.' );
+				return;
+
+			} else if ( objGeometry && objGeometry.isBufferGeometry ) {
+
+				const objPos = objGeometry.attributes.position;
+
+				const objNorm = objGeometry.attributes.normal;
+
+				let idx = 0;
+
+				// for simplicity, ignore index and drawcalls, and render every normal
+
+				for ( let j = 0, jl = objPos.count; j < jl; j ++ ) {
+
+					_v1.set( objPos.getX( j ), objPos.getY( j ), objPos.getZ( j ) ).applyMatrix4( matrixWorld );
+
+					_v2.set( objNorm.getX( j ), objNorm.getY( j ), objNorm.getZ( j ) );
+
+					_v2.applyMatrix3( _normalMatrix ).normalize().multiplyScalar( this.size ).add( _v1 );
+
+					position.setXYZ( idx, _v1.x, _v1.y, _v1.z );
+
+					idx = idx + 1;
+
+					position.setXYZ( idx, _v2.x, _v2.y, _v2.z );
+
+					idx = idx + 1;
+
+				}
+
+			}
+
+			position.needsUpdate = true;
+
+		}
+
+	}
+
 	class Mesh {
 	    constructor(path = './examples/emerald.obj') {
 	        this.filePath = path;
@@ -45280,8 +45413,10 @@
 	            return []
 	        }
 
-	        return this.mesh.geometry.getAttribute("position").array;
+	        return CreateVectorDouble(this.mesh.geometry.getAttribute("position").array);
 	    }
+
+	    createVertex
 
 	    extractFaceIndices()
 	    {
@@ -45290,12 +45425,38 @@
 	            return []
 	        }
 
-	        return this.mesh.geometry.index.array;
+	        return CreateVectorInt(this.mesh.geometry.index.array);
 	    }
 
 	    computeFF() {
 	        console.log("Mesh indexes : ");
-	        console.log(Module.printTarace());
+	        let data = ExtractArray(Module.meshMagic(this.extractFaceIndices(), this.extractVertices()));
+	        
+	        let directionsArray = new Float32Array(data.slice(0, data.length/2));
+	        let oppositeDirectionsArray = new Float32Array(data.slice(0, data.length/2).map(function(x) {return -x}));
+	        let verticesArray = new Float32Array(data.slice(data.length/2));
+	        
+	        const geometry = new BufferGeometry();
+	        geometry.setAttribute( 'position', new BufferAttribute( verticesArray, 3 ) );
+	        geometry.setAttribute( 'normal', new BufferAttribute( directionsArray, 3 ) );
+	        const material = new MeshBasicMaterial( { color: 0xff0000 } );
+	        const mesh = new Mesh$1( geometry, material );
+
+	        const geometry2 = new BufferGeometry();
+	        geometry2.setAttribute( 'position', new BufferAttribute( verticesArray, 3 ) );
+	        geometry2.setAttribute( 'normal', new BufferAttribute( oppositeDirectionsArray, 3 ) );
+	        const material2 = new MeshBasicMaterial( { color: 0xff0000 } );
+	        const mesh2 = new Mesh$1( geometry2, material2 );
+	        
+	        let helpers = new Group();
+	        let helper = new VertexNormalsHelper( mesh, 1, new Color(255, 0, 0), 3 );
+	        helper.name = "frameField";
+	        helpers.add(helper);
+	        let helper2 = new VertexNormalsHelper( mesh2, 1, new Color(255, 0, 0), 3 );
+	        helper2.name = "frameField";
+	        helpers.add(helper2);
+
+	        this.object.add(helpers);
 	    }
 	}
 

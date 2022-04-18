@@ -226,7 +226,7 @@ vector<bool> compute_is_feature(const TriMesh& m, const TriConnectivity& tc, dou
     return is_feature;
 }
 
-vector<double> appel(vector<int> ph2v, vector<double> ppoints){
+vector<double> appel(vector<int> const& ph2v, vector<double> const& ppoints){
     TriMesh m; m.h2v = ph2v;
     m.points.resize(ppoints.size()/3);
     FOR(i, ppoints.size()) m.points[i/3][i%3] = ppoints[i]; 
@@ -263,6 +263,3 @@ vector<double> appel(vector<int> ph2v, vector<double> ppoints){
     return crosses;
 }
 
-int main(int argc, char** argv) {
-
-}
