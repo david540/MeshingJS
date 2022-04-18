@@ -45113,12 +45113,18 @@
 	    }
 
 	    computePointsCloud() {
-	        let pos = this.mesh.geometry.attributes.position;
-	        var colors = []; for (var i = 0; i < pos.count; i++) colors.push(255, 0, 0);
-	        const geom_pt = new BufferGeometry();
-	        geom_pt.setAttribute('position', pos); geom_pt.setAttribute('color', new Float32BufferAttribute(colors, 3));
-	        const mt_pt = new PointsMaterial({ vertexColors: true, size: 1, sizeAttenuation: true, alphaTest: 0.5, transparent: true });
-	        this.pointsCloud = new Points(geom_pt, mt_pt);
+	        const loader = new TextureLoader();
+	        const texture = loader.load( '../examples/disc.png' );
+
+	        const pointsMaterial = new PointsMaterial( {
+	            color: new Color( 255, 0, 0 ),
+	            map: texture,
+	            size: 1,
+	            alphaTest: 0.5
+
+	        } );
+
+	        this.pointsCloud = new Points(this.mesh.geometry, pointsMaterial);
 	        this.pointsCloud.name = "pointsCloud";
 	        this.object.add(this.pointsCloud);
 	    }
@@ -45165,7 +45171,7 @@
 	  }
 
 	  initEventListeners() {
-	    window.addEventListener('resize', this.onWindowResize);
+	    window.addEventListener('resize', this.onWindowResize.bind(this));
 	    const fileInput = document.getElementById('file-upload-input');
 	    fileInput.onchange = (() => {
 	      const selectedFile = fileInput.files[0];
