@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import * as SceneUtils from './SceneUtils.js'
+import { GuiPanel } from './panel.js'
 import { Mesh } from './mesh.js'
 
 class Scene {
@@ -11,9 +12,10 @@ class Scene {
     this.scene = new THREE.Scene
     this.mesh = new Mesh();
     this.init();
+    this.gui = null
   }
 
-  init() {
+  async init() {
     document.body.appendChild(this.container);
     SceneUtils.initCamera(this);
     SceneUtils.initLighting(this);
@@ -22,13 +24,14 @@ class Scene {
     SceneUtils.initGround(this);
     SceneUtils.initControls(this);
     this.initEventListeners();
-    this.mesh.loadMesh()
+    await this.mesh.loadMesh();
     this.scene.add(this.mesh.object)
+    this.gui = new GuiPanel(this)
+    this.gui.init()
   }
 
-  initEventListeners()
-  {
-    window.addEventListener( 'resize', this.onWindowResize );
+  initEventListeners() {
+    window.addEventListener('resize', this.onWindowResize);
     const fileInput = document.getElementById('file-upload-input');
     fileInput.onchange = (() => {
       const selectedFile = fileInput.files[0];
@@ -42,7 +45,7 @@ class Scene {
   onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize( window.innerWidth, window.innerHeight );
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
   animate() {
@@ -55,4 +58,4 @@ class Scene {
   }
 }
 
-export {Scene}
+export { Scene }

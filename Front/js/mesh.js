@@ -1,6 +1,5 @@
 
 import * as THREE from 'three';
-import { SingletonPanel } from './panel.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 class Mesh {
@@ -12,13 +11,13 @@ class Mesh {
         this.pointsCloud = null
     }
 
-    loadMesh() {
+    async loadMesh() {
         this.object = new THREE.Group()
 
         //Load object
         const loadingManager = new THREE.LoadingManager();
         const objLoader = new OBJLoader(loadingManager);
-        objLoader.load(this.filePath, ((obj) => {
+        await objLoader.load(this.filePath, ((obj) => {
             obj.position.fromArray([0, 0, 0]);
             obj.name = "mesh"
             this.mesh = obj.children[0]
@@ -31,9 +30,6 @@ class Mesh {
 
             //set points cloud
             this.computePointsCloud()
-
-            //SingletonPanel.init(scene, meshOpe);
-            //meshOpe.display(scene);
         }).bind(this));
 
     }
@@ -43,22 +39,17 @@ class Mesh {
         var colors = []; for (var i = 0; i < pos.count; i++) colors.push(255, 0, 0);
         const geom_pt = new THREE.BufferGeometry();
         geom_pt.setAttribute('position', pos); geom_pt.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-        const mt_pt = new THREE.PointsMaterial({ vertexColors: true, size: SingletonPanel.point_width, sizeAttenuation: true, alphaTest: 0.5, transparent: true });
+        const mt_pt = new THREE.PointsMaterial({ vertexColors: true, size: 1, sizeAttenuation: true, alphaTest: 0.5, transparent: true });
         this.pointsCloud = new THREE.Points(geom_pt, mt_pt);
         this.pointsCloud.name = "pointsCloud";
         this.object.add(this.pointsCloud);
     }
 
 
-    display(scene) {
-        const cp_mesh = this.mesh.clone();
-        cp_mesh.material.color = { r: 0.4, g: 0.4, b: 0.4 };
-        scene.add(cp_mesh);
-        if (SingletonPanel.b_show_edges) cp_mesh.add(this.wireframe);
-        if (SingletonPanel.b_show_verts) {
-            this.points.material.size = SingletonPanel.point_width;
-            cp_mesh.add(this.points);
-        }
+    updateDisplay(displayOptions) {
+        this.pointsCloud.visible = displayOptions.bIsShowVerts
+        this.wireframe.visible = displayOptions.bIsShowEdges
+        this.pointsCloud.material.size = displayOptions.pointWidth
     }
 
 
