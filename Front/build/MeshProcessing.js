@@ -45283,9 +45283,19 @@
 	        return this.mesh.geometry.getAttribute("position").array;
 	    }
 
+	    extractFaceIndices()
+	    {
+	        if(!this.mesh)
+	        {
+	            return []
+	        }
+
+	        return this.mesh.geometry.index.array;
+	    }
+
 	    computeFF() {
 	        console.log("Mesh indexes : ");
-	        console.log(this.mesh.geometry.index);
+	        console.log(Module.printTarace());
 	    }
 	}
 

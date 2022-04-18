@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import {mergeVertices} from './GeometryUtils.js';
+import * as interfaceUtils from './interfaceUtils.js';
 
 class Mesh {
     constructor(path = './examples/emerald.obj') {
@@ -68,7 +69,17 @@ class Mesh {
             return []
         }
 
-        return this.mesh.geometry.getAttribute("position").array;
+        return interfaceUtils.CreateVectorDouble(this.mesh.geometry.getAttribute("position").array);
+    }
+
+    extractFaceIndices()
+    {
+        if(!this.mesh)
+        {
+            return []
+        }
+
+        return interfaceUtils.CreateVectorInt(this.mesh.geometry.index.array);
     }
 
     computeFF() {
