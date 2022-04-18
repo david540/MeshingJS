@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import * as SceneUtils from './SceneUtils.js'
+import { Mesh } from './mesh.js'
 
 class Scene {
   constructor() {
@@ -8,6 +9,7 @@ class Scene {
     this.renderer = null
     this.env = new THREE.Group()
     this.scene = new THREE.Scene
+    this.mesh = new Mesh();
     this.init();
   }
 
@@ -19,11 +21,22 @@ class Scene {
     SceneUtils.initRenderer(this);
     SceneUtils.initGround(this);
     SceneUtils.initControls(this);
+    this.initEventListeners();
+    this.mesh.loadMesh()
+    this.scene.add(this.mesh.object)
   }
 
   initEventListeners()
   {
-    this.onWindowResize()
+    window.addEventListener( 'resize', this.onWindowResize );
+    const fileInput = document.getElementById('file-upload-input');
+    fileInput.onchange = (() => {
+      const selectedFile = fileInput.files[0];
+      this.mesh.filePath = URL.createObjectURL(selectedFile)
+      this.scene.remove(this.mesh.object)
+      this.mesh.loadMesh()
+      this.scene.add(this.mesh.object)
+    }).bind(this)
   }
 
   onWindowResize() {
@@ -33,7 +46,7 @@ class Scene {
   }
 
   animate() {
-    requestAnimationFrame(this.animate);
+    requestAnimationFrame(this.animate.bind(this));
     this.render();
   }
 

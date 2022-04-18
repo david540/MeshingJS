@@ -1,4 +1,4 @@
-import { GUI } from './three.js/examples/jsm/libs/lil-gui.module.min.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 function refresh_scene (scene, meshOpe){
     scene.remove(scene.children[scene.children.length - 1]);
