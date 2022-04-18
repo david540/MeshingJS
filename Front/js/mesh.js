@@ -1,6 +1,7 @@
 
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import {mergeVertices} from './GeometryUtils.js';
 
 class Mesh {
     constructor(path = './examples/emerald.obj') {
@@ -21,6 +22,8 @@ class Mesh {
             obj.position.fromArray([0, 0, 0]);
             obj.name = "mesh"
             this.mesh = obj.children[0]
+            let newGeometry = mergeVertices(this.mesh.geometry)
+            this.mesh.geometry = newGeometry
             this.object.add(this.mesh);
 
             //set wireframe
@@ -58,10 +61,19 @@ class Mesh {
         this.pointsCloud.material.size = displayOptions.pointWidth
     }
 
+    extractVertices()
+    {
+        if(!this.mesh)
+        {
+            return []
+        }
+
+        return this.mesh.geometry.getAttribute("position").array;
+    }
 
     computeFF() {
         console.log("Mesh indexes : ")
-        console.log(this.mesh.geometry.index);
+        console.log(this.mesh.geometry.index)
     }
 }
 

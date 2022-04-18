@@ -21,11 +21,18 @@
 		<!-- Remove this when import maps will be widely supported -->
 		<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
 
-		<!-- <script type="module" src="./js/init.js"></script> -->
-        <script src="./build/MeshProcessing.js"></script>
 		<script>
-            const app = new MP.Scene();
-            app.animate();
-        </script>
+			</script>
+		
+		<script src="build/MeshLib.js"></script>
+		<script src="build/MeshProcessing.js"></script>
+		<script>
+			var Module = {
+			  onRuntimeInitialized: function() {
+				const app = new MP.Scene();
+				app.animate();
+			  }
+			};
+		  </script>
 	</body>
 </html>
