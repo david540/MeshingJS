@@ -54,8 +54,3 @@ export function initGround(scene)
     scene.scene.background = new THREE.Color( 0xa0a0a0 );
     scene.scene.fog = new THREE.Fog( 0xa0a0a0, 10, 500 );
 }
-
-export function loadMesh(scene)
-{
-
-}
