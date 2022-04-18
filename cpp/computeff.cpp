@@ -150,9 +150,7 @@ struct Lstq{
 
 vector<double> compute_FF_angles(const vector<vector<pair<int, double>>>& adj, const vector<pair<int, double>>& constraints){
     Lstq solver(2 * adj.size());
-    for(auto [i, val] : constraints){
-        solver.lock(i, val);
-    }
+    for(auto [i, angle] : constraints) FOR(d, 2) solver.lock((i << 1)|d, d == 0 ? cos(4 * angle) : sin(4 * angle));
     FOR(i, adj.size()){
         for(auto [j, omega_0] : adj[i]){
             double rot[2][2] = { { cos(4 * omega_0), sin(4 * omega_0) }, { -sin(4 * omega_0), cos(4 * omega_0) } };
@@ -179,7 +177,7 @@ vector<double> compute_FF_angles(const TriMesh& m, const TriConnectivity& tc){
     vector<vector<pair<int, double>>> adj(m.nf());
     vector<pair<int, double>> constraints;
     FOR(h, m.nh()) {
-        if(tc.opp(h) != -1) adj[h/3].push_back(make_pair(tc.opp(h), c_ij(h)));
+        if(tc.opp(h) != -1) adj[h/3].push_back(make_pair(tc.opp(h), -c_ij(h)));
         else constraints.push_back(make_pair(h/3, edge_angle_in_ref(h)));
     }
     return compute_FF_angles(adj, constraints);
