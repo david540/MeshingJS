@@ -1,0 +1,20 @@
+{
+  "name": "Mp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/init.js",
+  "author": "Collab",
+  "license": "MIT",
+  "dependencies": {
+    "@rollup/plugin-commonjs": "^16.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "jquery": "^3.5.1",
+    "rollup": "^2.70.2",
+    "rollup-plugin-terser": "^5.3.0",
+    "three": "^0.137.0"
+  },
+  "scripts": {
+    "build": "rollup -c \"rollup_config.js\""
+  }
+}
