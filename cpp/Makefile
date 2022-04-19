@@ -5,7 +5,7 @@ OUTPUT=$(OUTPUT_FOLDER)/MeshLib.js
 # SRC = $(wildcard *.cpp)
 
 compile: .clear
-	$(CC) $(SOURCEFILES) -o $(OUTPUT) -O3 --std=c++17 --bind
+	$(CC) $(SOURCEFILES) -s ALLOW_MEMORY_GROWTH=1 -o $(OUTPUT) -O3 --std=c++17 --bind
 	cp build/* ../Front/build/
 
 .clear:

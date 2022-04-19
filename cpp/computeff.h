@@ -83,70 +83,6 @@ void TriConnectivity::reset() {
     }
 }
 
-inline void file_must_no_be_at_end(std::ifstream& f, const std::string& r = "bad") { if (f.eof()) { f.close(); throw std::runtime_error("ERROR 32323");} }
-
-inline static bool string_start(const std::string& string, const std::string& start_of_string) {
-    size_t start = 0;
-    FOR(i, string.size()) if (string[i] != ' ' && string[i] != '\t') {
-        start = (size_t)i;
-        break;
-    }
-    std::string copy_without_space(string.begin() + start, string.end());
-    if (copy_without_space.size() < start_of_string.size()) return false;
-    return (std::string(copy_without_space.begin(), copy_without_space.begin() + (long int)start_of_string.size()) == start_of_string);
-}
-
-void read_medit_format(const std::string& filename, std::vector<vec3>& verts_, std::vector<int>& tris_) {
-    std::ifstream in;
-    in.open(filename, std::ifstream::in);
-    if (in.fail())
-        throw std::runtime_error("Failed to open " + filename);
-
-    std::string firstline;
-
-    while (!in.eof()) {
-        std::getline(in, firstline);
-        if (string_start(firstline, "Vertices")) {
-            std::string line;
-            int nb_of_vertices = 0;
-            {
-                file_must_no_be_at_end(in, "parsing vertices");
-                std::getline(in, line);
-                std::istringstream iss(line.c_str());
-                iss >> nb_of_vertices;
-            }
-            verts_.resize(nb_of_vertices);
-            FOR(v, nb_of_vertices) {
-                file_must_no_be_at_end(in, "parsing vertices");
-                std::getline(in, line);
-                std::istringstream iss(line.c_str());
-                FOR(i, 3)  iss >> verts_[v][i];
-            }
-        }
-        if (string_start(firstline, "Triangles")) {
-            std::string line;
-            int nb_of_tri = 0;
-            {
-                file_must_no_be_at_end(in, "parsing Triangles");
-                std::getline(in, line);
-                std::istringstream iss(line.c_str());
-                iss >> nb_of_tri;
-            }
-            tris_.resize(3 * nb_of_tri);
-            FOR(t, nb_of_tri) {
-                file_must_no_be_at_end(in, "parsing Triangles");
-                std::getline(in, line);
-                std::istringstream iss(line.c_str());
-                FOR(i, 3) {
-                    int a = 0;
-                    iss >> a;
-                    tris_[3 * t + i] = a - 1;
-                }
-            }
-        }
-    }
-}
-
 struct Lstq{
     int N; 
     int state;
@@ -231,6 +167,8 @@ vector<double> appel(vector<int> const& ph2v, vector<double> const& ppoints){
     m.points.resize(ppoints.size()/3);
     FOR(i, ppoints.size()) m.points[i/3][i%3] = ppoints[i]; 
     TriConnectivity tc(m);
+
+    FOR(h, m.nh()) if(tc.opp(h) == -1) prln("Bord");
 
     vector<bool> is_feature(m.nh(), false);
     

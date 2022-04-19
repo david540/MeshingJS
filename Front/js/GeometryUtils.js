@@ -43,20 +43,20 @@ export function mergeVertices( geometry, tolerance = 1e-4 ) {
 
         let hash = '';
 
-        for ( let j = 0, l = attributeNames.length; j < l; j ++ ) {
+        //for ( let j = 0, l = attributeNames.length; j < l; j ++ ) {
 
-            const name = attributeNames[ j ];
-            const attribute = geometry.getAttribute( name );
-            const itemSize = attribute.itemSize;
+        const name = 'position'//attributeNames[ j ];
+        const attribute = geometry.getAttribute( name );
+        const itemSize = attribute.itemSize;
 
-            for ( let k = 0; k < itemSize; k ++ ) {
+        for ( let k = 0; k < itemSize; k ++ ) {
 
-                // double tilde truncates the decimal value
-                hash += `${~ ~ ( attribute[ getters[ k ] ]( index ) * shiftMultiplier )},`;
+            // double tilde truncates the decimal value
+            hash += `${~ ~ Math.round( attribute[ getters[ k ] ]( index ) * shiftMultiplier )},`;
 
-            }
+        }
 
-        } // Add another reference to the vertex if it's already
+        //} // Add another reference to the vertex if it's already
         // used by another index
 
 

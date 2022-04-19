@@ -24,7 +24,7 @@ class Mesh {
             obj.position.fromArray([0, 0, 0]);
             obj.name = "mesh"
             this.mesh = obj.children[0]
-            let newGeometry = mergeVertices(this.mesh.geometry)
+            let newGeometry = mergeVertices(this.mesh.geometry, 1e-8)
             this.mesh.geometry = newGeometry
             this.object.add(this.mesh);
 

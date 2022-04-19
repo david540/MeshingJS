@@ -1,1 +1,5 @@
 */node_modules
+Front/build/
+cpp/build/
+Front/examples/
+.vscode
