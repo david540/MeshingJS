@@ -31,7 +31,7 @@ export function initLighting(scene)
 
 export function initRenderer(scene)
 {
-    scene.renderer = new THREE.WebGLRenderer();
+    scene.renderer = new THREE.WebGLRenderer({ antialias: true});
     scene.renderer.setPixelRatio( window.devicePixelRatio );
     scene.renderer.setSize( window.innerWidth, window.innerHeight );
     scene.container.appendChild( scene.renderer.domElement );
