@@ -87,7 +87,7 @@ class Mesh {
 
     computeFF() {
         console.log("Mesh indexes : ")
-        let data = interfaceUtils.ExtractArray(Module.meshMagic(this.extractFaceIndices(), this.extractVertices()))
+        let data = interfaceUtils.ExtractArray(Module.computeFF(this.extractFaceIndices(), this.extractVertices()))
         
         let directionsArray = new Float32Array(data.slice(0, data.length/2))
         let oppositeDirectionsArray = new Float32Array(data.slice(0, data.length/2).map(function(x) {return -x}))
