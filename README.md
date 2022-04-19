@@ -24,5 +24,4 @@ npm run build
 ```
 then go to localhost:8080, the page should be up 
 
-
-![image](https://user-images.githubusercontent.com/25902963/163884280-972ac74b-30b3-47b7-9462-93f106c6fa96.png)
+![image](https://user-images.githubusercontent.com/25902963/163992656-9a075d12-d2e5-4de1-b0e1-2ae1b6f29571.png)
