@@ -1,17 +1,11 @@
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
-function refresh_scene(scene, meshOpe) {
-    scene.remove(scene.children[scene.children.length - 1]);
-    meshOpe.display(scene);
-}
-
 class DisplayOptions
 {
     bIsShowEdges = true;
     bIsShowVerts = true;
     pointWidth = 1;
 }
-
 
 class GuiPanel {
     constructor(scene) {

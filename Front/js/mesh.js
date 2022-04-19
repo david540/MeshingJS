@@ -10,6 +10,7 @@ class Mesh {
         this.filePath = path
         this.object = new THREE.Group()
         this.mesh = null
+        this.computation_mesh = null
         this.wireframe = null
         this.pointsCloud = null
     }
@@ -24,8 +25,8 @@ class Mesh {
             obj.position.fromArray([0, 0, 0]);
             obj.name = "mesh"
             this.mesh = obj.children[0]
-            let newGeometry = mergeVertices(this.mesh.geometry, 1e-8)
-            this.mesh.geometry = newGeometry
+            this.computation_mesh = this.mesh.clone()
+            this.computation_mesh.geometry = mergeVertices(this.mesh.geometry, 1e-8)
             this.object.add(this.mesh);
 
             //set wireframe
@@ -42,20 +43,16 @@ class Mesh {
     computePointsCloud() {
         const loader = new THREE.TextureLoader();
         const texture = loader.load( '../examples/disc.png' );
-
         const pointsMaterial = new THREE.PointsMaterial( {
             color: new THREE.Color( 255, 0, 0 ),
             map: texture,
             size: 1,
             alphaTest: 0.5
-
         } );
-
         this.pointsCloud = new THREE.Points(this.mesh.geometry, pointsMaterial)
         this.pointsCloud.name = "pointsCloud";
         this.object.add(this.pointsCloud);
     }
-
 
     updateDisplay(displayOptions) {
         this.pointsCloud.visible = displayOptions.bIsShowVerts
@@ -63,57 +60,28 @@ class Mesh {
         this.pointsCloud.material.size = displayOptions.pointWidth
     }
 
-    extractVertices()
-    {
-        if(!this.mesh)
-        {
-            return []
-        }
-
-        return interfaceUtils.CreateVectorDouble(this.mesh.geometry.getAttribute("position").array);
+    extractVertices() {
+        if(!this.mesh) return []
+        return interfaceUtils.CreateVectorDouble(this.computation_mesh.geometry.getAttribute("position").array);
     }
 
-    createVertex
-
-    extractFaceIndices()
-    {
-        if(!this.mesh)
-        {
-            return []
-        }
-
-        return interfaceUtils.CreateVectorInt(this.mesh.geometry.index.array);
+    extractFaceIndices() {
+        if(!this.mesh) return []
+        return interfaceUtils.CreateVectorInt(this.computation_mesh.geometry.index.array);
     }
 
     computeFF() {
-        console.log("Mesh indexes : ")
         let data = interfaceUtils.ExtractArray(Module.computeFF(this.extractFaceIndices(), this.extractVertices()))
-        
-        let directionsArray = new Float32Array(data.slice(0, data.length/2))
-        let oppositeDirectionsArray = new Float32Array(data.slice(0, data.length/2).map(function(x) {return -x}))
-        let verticesArray = new Float32Array(data.slice(data.length/2))
-        
+        const dir_arr = data.slice(0, data.length/2).concat(data.slice(0, data.length/2).map(function(x) {return -x}));
+        const vert_arr = data.slice(data.length/2).concat(data.slice(data.length/2))
         const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute( 'position', new THREE.BufferAttribute( verticesArray, 3 ) );
-        geometry.setAttribute( 'normal', new THREE.BufferAttribute( directionsArray, 3 ) );
+        geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(vert_arr), 3 ) );
+        geometry.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array(dir_arr), 3 ) );
         const material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
         const mesh = new THREE.Mesh( geometry, material )
-
-        const geometry2 = new THREE.BufferGeometry();
-        geometry2.setAttribute( 'position', new THREE.BufferAttribute( verticesArray, 3 ) );
-        geometry2.setAttribute( 'normal', new THREE.BufferAttribute( oppositeDirectionsArray, 3 ) );
-        const material2 = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
-        const mesh2 = new THREE.Mesh( geometry2, material2 )
-        
-        let helpers = new THREE.Group()
         let helper = new VertexNormalsHelper( mesh, 1, new THREE.Color(255, 0, 0), 3 );
         helper.name = "frameField"
-        helpers.add(helper)
-        let helper2 = new VertexNormalsHelper( mesh2, 1, new THREE.Color(255, 0, 0), 3 );
-        helper2.name = "frameField"
-        helpers.add(helper2)
-
-        this.object.add(helpers)
+        this.object.add(helper)
     }
 }
 
