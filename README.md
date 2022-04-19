@@ -23,3 +23,6 @@ npm install // if running for the first time
 npm run build
 ```
 then go to localhost:8080, the page should be up 
+
+
+![image](https://user-images.githubusercontent.com/25902963/163884280-972ac74b-30b3-47b7-9462-93f106c6fa96.png)
