@@ -11,30 +11,62 @@ class Mesh {
         this.object = new THREE.Group()
         this.mesh = null
         this.computation_mesh = null
+        this.scale_val = 1.
+        this.translates = {x : 0, y : 0, z : 0}
         this.wireframe = null
         this.pointsCloud = null
     }
+    recenter_and_rescale(obj){
+       // obj.translateX(this.translates.x)
+       // obj.translateY(this.translates.y)
+       // obj.translateZ(this.translates.z)
+        obj.scale.set(10./this.scale_val, 10./this.scale_val, 10./this.scale_val);
+    }
 
-    async loadMesh() {
+    async loadMesh(camera) {
+        //if(this.object) camera.remove(this.object)
+        camera.position.fromArray([0, 0, 0]);
+        
         this.object = new THREE.Group()
-
+        //camera.add(this.object);
+        //this.object.position.set(0,0,-20);
         //Load object
         const loadingManager = new THREE.LoadingManager();
         const objLoader = new OBJLoader(loadingManager);
         await objLoader.load(this.filePath, ((obj) => {
-            obj.position.fromArray([0, 0, 0]);
+            //obj.position.fromArray([0, 0, 0]);
             obj.name = "mesh"
             this.mesh = obj.children[0]
+            this.mesh.geometry.computeBoundingBox();
+            let bbox = this.mesh.geometry.boundingBox;
+            this.translates = {x : -bbox.min.x, y : -bbox.min.y, z : -bbox.min.z}
+            let max_scale = Math.max(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y);
+            this.scale_val = Math.max(bbox.max.z - bbox.min.z, max_scale);
+            this.recenter_and_rescale(this.mesh);
+           // this.mesh.scale.set(1./this.scale_val, 1./this.scale_val, 1./this.scale_val);
+            /*
+            var arr = this.mesh.geometry.getAttribute("position").array;
+            for(var i = 0; i < npoints; i++){
+                arr[3 * i] -= bbox.min.x;
+                arr[3 * i + 1] -= bbox.min.y;
+                arr[3 * i + 2] -= bbox.min.z;
+                arr[3 * i] /= (bbox.max.x - bbox.min.x);
+                arr[3 * i + 1] /= (bbox.max.x - bbox.min.x);
+                arr[3 * i + 2] /= (bbox.max.x - bbox.min.x);
+            }*/
             this.computation_mesh = this.mesh.clone()
             this.computation_mesh.geometry = mergeVertices(this.mesh.geometry, 1e-8)
+
+            
+            this.object.position.copy( camera.position );
+            //this.object.translateZ( - 10 );
             this.object.add(this.mesh);
 
-            //set wireframe
             this.wireframe = new THREE.LineSegments(new THREE.WireframeGeometry(this.mesh.geometry), new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }));
             this.wireframe.name = "wireframe"
+            this.recenter_and_rescale(this.wireframe)
             this.object.add(this.wireframe)
 
-            //set points cloud
             this.computePointsCloud()
         }).bind(this));
 
@@ -46,11 +78,12 @@ class Mesh {
         const pointsMaterial = new THREE.PointsMaterial( {
             color: new THREE.Color( 255, 0, 0 ),
             map: texture,
-            size: 1,
+            size: 0.01,
             alphaTest: 0.5
         } );
         this.pointsCloud = new THREE.Points(this.mesh.geometry, pointsMaterial)
         this.pointsCloud.name = "pointsCloud";
+        this.recenter_and_rescale(this.pointsCloud)
         this.object.add(this.pointsCloud);
     }
 
@@ -79,7 +112,8 @@ class Mesh {
         geometry.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array(dir_arr), 3 ) );
         const material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
         const mesh = new THREE.Mesh( geometry, material )
-        let helper = new VertexNormalsHelper( mesh, 1, new THREE.Color(255, 0, 0), 3 );
+        this.recenter_and_rescale(mesh)
+        let helper = new VertexNormalsHelper( mesh, 0.03, new THREE.Color(255, 0, 0), 3 );
         helper.name = "frameField"
         this.object.add(helper)
     }

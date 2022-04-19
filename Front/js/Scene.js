@@ -24,7 +24,7 @@ class Scene {
     SceneUtils.initGround(this);
     SceneUtils.initControls(this);
     this.initEventListeners();
-    await this.mesh.loadMesh();
+    await this.mesh.loadMesh(this.camera);
     this.scene.add(this.mesh.object)
     this.gui = new GuiPanel(this)
     this.gui.init()
@@ -37,7 +37,7 @@ class Scene {
       const selectedFile = fileInput.files[0];
       this.mesh.filePath = URL.createObjectURL(selectedFile)
       this.scene.remove(this.mesh.object)
-      this.mesh.loadMesh()
+      this.mesh.loadMesh(this.camera)
       this.scene.add(this.mesh.object)
     }).bind(this)
   }

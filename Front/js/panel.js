@@ -1,7 +1,6 @@
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
-class DisplayOptions
-{
+class DisplayOptions {
     bIsShowEdges = true;
     bIsShowVerts = true;
     pointWidth = 1;

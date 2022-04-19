@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 export function initCamera(scene)
 {
     scene.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-    scene.camera.position.z = 25;
+    //scene.camera.position.z = 25;
     const pointLight = new THREE.PointLight( 0xffffff, 0.8 );
     scene.camera.add( pointLight );
     scene.scene.add( scene.camera );
@@ -40,6 +40,7 @@ export function initRenderer(scene)
 export function initControls(scene)
 {
     const controls = new OrbitControls( scene.camera, scene.renderer.domElement );
+    controls.zoomSpeed = 3
     controls.target.set( 0, 1, 0 ); 
     controls.update();
 }

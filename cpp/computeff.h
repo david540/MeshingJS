@@ -168,7 +168,7 @@ vector<double> computeFF(vector<int> const& ph2v, vector<double> const& ppoints)
     FOR(i, ppoints.size()) m.points[i/3][i%3] = ppoints[i]; 
     TriConnectivity tc(m);
 
-    FOR(h, m.nh()) if(tc.opp(h) == -1) prln("Bord");
+    FOR(h, m.nh()) if(tc.opp(h) == -1) {prln("There is boundary verts"); break;}
 
     vector<bool> is_feature(m.nh(), false);
     
