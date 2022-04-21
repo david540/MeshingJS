@@ -38,22 +38,13 @@ class Mesh {
             obj.name = "mesh"
             this.mesh = obj.children[0]
             this.mesh.geometry.computeBoundingBox();
+            
             let bbox = this.mesh.geometry.boundingBox;
             this.translates = {x : -bbox.min.x, y : -bbox.min.y, z : -bbox.min.z}
             let max_scale = Math.max(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y);
             this.scale_val = Math.max(bbox.max.z - bbox.min.z, max_scale);
             this.recenter_and_rescale(this.mesh);
-           // this.mesh.scale.set(1./this.scale_val, 1./this.scale_val, 1./this.scale_val);
-            /*
-            var arr = this.mesh.geometry.getAttribute("position").array;
-            for(var i = 0; i < npoints; i++){
-                arr[3 * i] -= bbox.min.x;
-                arr[3 * i + 1] -= bbox.min.y;
-                arr[3 * i + 2] -= bbox.min.z;
-                arr[3 * i] /= (bbox.max.x - bbox.min.x);
-                arr[3 * i + 1] /= (bbox.max.x - bbox.min.x);
-                arr[3 * i + 2] /= (bbox.max.x - bbox.min.x);
-            }*/
+            
             this.computation_mesh = this.mesh.clone()
             this.computation_mesh.geometry = mergeVertices(this.mesh.geometry, 1e-8)
 
@@ -110,12 +101,32 @@ class Mesh {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(vert_arr), 3 ) );
         geometry.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array(dir_arr), 3 ) );
-        const material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+        const material = new THREE.MeshBasicMaterial( { color: 0x0000ff } );
         const mesh = new THREE.Mesh( geometry, material )
         this.recenter_and_rescale(mesh)
         let helper = new VertexNormalsHelper( mesh, 0.03, new THREE.Color(255, 0, 0), 3 );
         helper.name = "frameField"
         this.object.add(helper)
+    }
+    computeParam() {
+        //let data = interfaceUtils.ExtractArray(Module.computeFF(this.extractFaceIndices(), this.extractVertices()))
+        const texture = new THREE.TextureLoader().load( "examples/quad_param.png" );
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set( 1, 1 );
+        console.log(this.mesh.geometry.attributes);
+        
+        //let uvs = new Array(this.mesh.geometry.attributes.position.count);
+        //for (var i = 0; i < this.mesh.geometry.attributes.position.count; i ++ ) {
+        //    uvs[2 * i] = (i%3 == 1)
+        //    uvs[2 * i + 1] = (i%3 == 2)
+        //}
+        let uvs = interfaceUtils.ExtractArray(Module.compute_param(this.extractFaceIndices(), this.extractVertices()))
+        this.mesh.geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+        this.mesh.material = new THREE.MeshLambertMaterial( {  
+            transparent: true,
+            map: texture
+        } );
     }
 }
 

@@ -2,32 +2,16 @@
     This file is using Coudert-Osmont Reduction Matrix (this is not a complete version, but a light one)
     His github : https://github.com/Nanored4498
 */
-#pragma once
 
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <queue>
-#include <stack>
-#include <array>
-#include <chrono>
-#include "math.h"
+#include "common.h"
+
+//#include "computeff.h"
 
 #include "OpenNL_psm/OpenNL_psm.h"
 
-#define M_PI       3.14159265358979323846   // pi
-#define M_PI_2     1.57079632679489661923   // pi/2
 
 using namespace std;
 
-#define FORm(i, m, n) for(int i = m; i < (int) n; i++)
-#define FOR(i, n) FORm(i, 0, n)
-template <typename T>
-void prln(T t) { cout << t << "\n"; }
-template <typename T, typename ...U>
-void prln(T t, U ...u) { cout << t; prln(u...); }
 
 struct Coeff {
 	static constexpr int    ONE = -2;
@@ -137,8 +121,8 @@ struct SparseMatrix {
 	inline LinExpr row(int i) const { return LinExpr(mat.begin()+offset[i], mat.begin()+offset[i+1]); }
 	inline rowRange rowIt(int i) const { return { mat.begin()+offset[i], mat.begin()+offset[i+1] }; }
 
-	double eval(int i, const std::vector<double> &X) const;
-	double eval(const LinExpr& expr, const std::vector<double>& X) const;
+	inline double eval(int i, const std::vector<double> &X) const { double y=0.; for(const Coeff &c : rowIt(i)) if(c.index == Coeff::ONE) y += c.a; else y += c.a * X[c.index]; return y; }
+
 	void mult(const std::vector<double> &X, std::vector<double> &Y) const;
 	inline std::vector<double> operator*(const std::vector<double> &X) const { std::vector<double> Y; mult(X, Y); return Y; }
 
@@ -359,101 +343,13 @@ struct vec2Expr {
 	inline vec2Expr& operator+=(const vec2Expr &v) { x += v.x; y += v.y; return *this; }
 	inline vec2Expr& operator-=(const vec2Expr &v) { x -= v.x; y -= v.y; return *this; }
 
-	vec2Expr& vec2Expr::rotate(int k) {
+	vec2Expr& rotate(int k) {
         if(k&1) std::swap(x, y);
         if(k&2) y *= -1.;
         if((k+1)&2) x *= -1.;
         return *this;
     }
 };
-
-struct vec3{
-    double x, y, z;
-    double& operator[](const int i) { return i==0 ? x : (1==i ? y : z); }
-    double  operator[](const int i) const { return i==0 ? x : (1==i ? y : z); }
-} ;
-vec3 operator+(const vec3& lhs, const vec3& rhs) { vec3 r = lhs; FOR(i, 3) r[i] += rhs[i]; return r;}
-vec3 operator-(const vec3& lhs, const vec3& rhs) { vec3 r = lhs; FOR(i, 3) r[i] -= rhs[i]; return r;}
-double dot(const vec3& lhs, const vec3& rhs){ double r = 0; FOR(i, 3) r += lhs[i] * rhs[i]; return r;}
-vec3 cross(const vec3 &v1, const vec3 &v2){ return {v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x}; }
-double norm(const vec3& v){ return sqrt(dot(v, v));}
-double norm2(const vec3& v){ return dot(v, v);}
-vec3 operator*(const vec3& v, double c) {vec3 r; FOR(i, 3) r[i] = v[i] * c; return r;}
-vec3 operator/(const vec3& v, double c) {vec3 r; FOR(i, 3) r[i] = v[i] / c; return r;}
-vec3 normalized(const vec3 &v) { return v / norm(v); }
-
-struct vec2{
-    double x, y;
-    double& operator[](const int i) { return i==0 ? x : y; }
-    double  operator[](const int i) const { return i==0 ? x : y; }
-} ;
-vec2 operator+(const vec2& lhs, const vec2& rhs) { vec2 r = lhs; FOR(i, 2) r[i] += rhs[i]; return r;}
-vec2 operator-(const vec2& lhs, const vec2& rhs) { vec2 r = lhs; FOR(i, 2) r[i] -= rhs[i]; return r;}
-double dot(const vec2& lhs, const vec2& rhs){ double r = 0; FOR(i, 2) r += lhs[i] * rhs[i]; return r;}
-//vec2 cross(const vec2 &v1, const vec2 &v2){ return {v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x}; }
-double norm(const vec2& v){ return sqrt(dot(v, v));}
-vec2 operator*(const vec2& v, double c) {vec2 r; FOR(i, 2) r[i] = v[i] * c; return r;}
-vec2 operator/(const vec2& v, double c) {vec2 r; FOR(i, 2) r[i] = v[i] / c; return r;}
-vec2 normalized(const vec2 &v) { return v / norm(v); }
-
-struct TriMesh {
-    vector<vec3> points{};
-    vector<int> h2v{};
-    int nf() const { return h2v.size() /3; }
-    int nh() const { return h2v.size(); }
-};
-
-struct TriConnectivity { 
-    TriConnectivity(const TriMesh& p_m);
-    vec3 geom(const int h) const { return m.points[m.h2v[next(h)]] - m.points[m.h2v[h]]; }
-    int facet(const int h) const { return h / 3; }
-    int  from(const int h) const { return m.h2v[h]; }
-    int    to(const int h) const { return m.h2v[next(h)]; }
-    int  prev(const int h) const { return h - h % 3 + (h + 2) % 3; }
-    int  next(const int h) const { return h - h % 3 + (h + 1) % 3; }
-    int opp(const int h) const { return h2h[h] == -1 ? -1 : prev(h2h[h]); }
-    bool is_boundary_vert(const int v) const { return nav(v2h[v]) == -1; }
-    int nav(const int h) const  { return opp(prev(h)); }
-    int pav(const int h) const { return h2h[h]; }
-    void reset();
-    const TriMesh& m;
-    vector<int> v2h;
-    vector<int> h2h;
-};
-
-TriConnectivity::TriConnectivity(const TriMesh& p_m) : m(p_m) { reset(); }
-
-void TriConnectivity::reset() {
-    vector<vector<pair<int, int>>> ring(m.points.size());
-    v2h.assign(m.points.size(), -1);
-    h2h.assign(m.h2v.size(), -1);
-    FOR(h, m.h2v.size()) {
-        v2h[m.h2v[h]] = h;
-        ring[m.h2v[h]].push_back(make_pair(m.h2v[next(h)], h));
-    }
-    FOR(h, m.h2v.size()) {
-        int id = -1;
-        FOR(i, ring[m.h2v[next(h)]].size()) if (ring[m.h2v[next(h)]][i].first == m.h2v[h]) {
-            id = i; break;
-        }
-        if (id == -1) v2h[m.h2v[h]] = h;
-        else h2h[h] = next(ring[m.h2v[next(h)]][id].second);
-    }
-    FOR(v, m.points.size()) if (v2h[v] != -1 && pav(v2h[v]) == -1) {
-        while (nav(v2h[v]) != -1) v2h[v] = nav(v2h[v]);
-    }
-}
-
-vector<bool> compute_is_feature(const TriMesh& m, const TriConnectivity& tc, double thr_feature = M_PI / 4){
-    auto normal = [&m, &tc] (int f) {
-        return normalized(cross(tc.geom(3 * f), tc.geom(3 * f + 1)));
-    };
-    vector<bool> is_feature(m.nh());
-    FOR(h, m.nh()) if (tc.opp(h) == -1 || acos(dot(normal(h/3), normal(tc.opp(h)/3))) > thr_feature) {
-		is_feature[h] = true;
-    }
-    return is_feature;
-}
 
 vector<int> compute_jumps0(const TriMesh& m, const TriConnectivity& tc, std::vector<vec2> &alpha) {
 
@@ -466,16 +362,17 @@ vector<int> compute_jumps0(const TriMesh& m, const TriConnectivity& tc, std::vec
 
 	//param.zeroPJ.ptr->data.assign(param.m.ncorners(), false);
     vector<int> valence(m.points.size());
-    vector<int> jumpPJ(m.nh(), 1);
+    vector<int> jumpPJ(m.nh(), 0);
 	std::vector<bool> seen(m.nf(), false);
 	std::vector<int> Qring;
 	std::vector<int> nz(m.points.size(), 0);
 	for(int v : m.h2v) ++ nz[v];
 	const auto setZero = [&](int h)->void {
-		jumpPJ[h] = 0;
+		jumpPJ[h] |= 1;
 		int v = tc.from(h);
 		if(--nz[v] == 1) Qring.push_back(v);
 	};
+	prln("Avant qtree :");
 	for(int f_seed = 0; f_seed < m.nf(); ++f_seed) if(!seen[f_seed]) {
 		std::queue<int> Qtree;
 		seen[f_seed] = true;
@@ -502,7 +399,8 @@ vector<int> compute_jumps0(const TriMesh& m, const TriConnectivity& tc, std::vec
 					d = std::min(d, std::abs(diff.x - p+1) + std::abs(diff.y - p+1));
 					if(d < best) {
 						best = d;
-						jumpPJ[h] = j << 1;
+						jumpPJ[h] = jumpPJ[h]&1;
+						jumpPJ[h] |= j << 1;
 					}
 					std::swap(af.x, af.y);
 					af.y += M_PI;
@@ -520,6 +418,7 @@ vector<int> compute_jumps0(const TriMesh& m, const TriConnectivity& tc, std::vec
 			}
 		}
 	}
+	prln("Valence :");
     // Compute valences
 	FOR(v, m.points.size()) {
 		int h = tc.v2h[v], bh=-1, obh=-1;
@@ -550,31 +449,37 @@ vector<int> compute_jumps0(const TriMesh& m, const TriConnectivity& tc, std::vec
 		valence[v] = 4 - round(4.*ind);
 	}
 
+	prln("Simplify cut graph");
 	// Remove some edges from cut graph
 	while(!Qring.empty()) {
 		int v = Qring.back();
 		Qring.pop_back();
+		if(nz[v] == 0) continue;
 		if(valence[v] != 4 || tc.is_boundary_vert(v)) continue;
 		int h = tc.v2h[v];
-		while(!jumpPJ[h]) h = tc.h2h[h];
+		while(jumpPJ[h] & 1){
+			h = tc.h2h[h];
+		}
 		setZero(h);
 		int h2 = tc.opp(h);
 		setZero(h2);
 	}
+	prln("Bye !");
+	return jumpPJ;
 }
 
-vector<vec2> angles_to_ffuv(const TriMesh& m, const TriConnectivity& tc, const vector<vec2>& alpha){
+vector<vec2> angles_to_ffuv(const TriMesh& m, const TriConnectivity& tc, const vector<vec2>& alpha, double desired_size = 1){
     vector<vec2> ff_uv(m.nh());
     FOR(f, m.nf()){
         ff_uv[3 * f] = vec2{0, 0};
 		const double ca = std::cos(alpha[f][0]), sa = std::sin(alpha[f][0]);
 		const double cb = std::cos(alpha[f][1]), sb = std::sin(alpha[f][1]);
 		const double l0 = norm(tc.geom(3 * f));
-		ff_uv[3 * f + 1] = vec2{ ca * l0, cb * l0 };
+		ff_uv[3 * f + 1] = vec2{ ca * l0, cb * l0 } / desired_size;
 		const double l1 = - norm(tc.geom(3 * f + 2));
         double angle_ref  = -std::acos(dot(normalized(tc.geom(3 * f)), normalized(tc.geom(3 * f + 2))));
 		const double c1 = l1 * cos(angle_ref), s1 = l1 * sin(angle_ref);
-        ff_uv[3 * f + 2] = vec2{ ca * c1 + sa * s1, cb * c1 + sb * s1 };
+        ff_uv[3 * f + 2] = vec2{ ca * c1 + sa * s1, cb * c1 + sb * s1 } / desired_size;
     }
     return ff_uv;
 }
@@ -594,10 +499,13 @@ ReductionBuilder initRB(const TriMesh& m, const TriConnectivity& tc, const vecto
         return vec2{ ca * c1 + sa * s1, cb * c1 + sb * s1 };
 	};
 
+	prln("Initialization :");
 	// Create system
 	ReductionBuilder builder(m.nh() << 1);
     vector<bool> featureEdge = compute_is_feature(m, tc);
 
+	
+	prln("First step :");
 	// Add equalities
 	for(int h = 0; h < m.nh(); ++h) {
 		int opp = tc.opp(h);
@@ -606,17 +514,18 @@ ReductionBuilder initRB(const TriMesh& m, const TriConnectivity& tc, const vecto
 			const int d = std::abs(duv.x) < std::abs(duv.y) ? 0 : 1;
 			builder.addEquality(builder.lines[(h << 1) | d] - builder.lines[(tc.next(h) << 1) | d]);
 		}
-		if(opp == -1 || jumpPJ[h]) continue;
+		if(opp == -1 || !(jumpPJ[h]&1)) continue;
 		opp = tc.next(opp);
 		FOR(d, 2) builder.addEquality(builder.lines[2*h+d] - builder.lines[2*opp+d]);
 	}
 
+	prln("Second step :");
 	// Second step
 	FOR(v, builder.size()) builder.simplify(v);
 	for(int h = 0; h < m.nh(); ++h) {
 		builder.simplify(2*h);
 		builder.simplify(2*h+1);
-		if(!jumpPJ[h]) continue;
+		if(jumpPJ[h]&1) continue;
 		const int opp = tc.opp(h);
 		if(opp < h) continue;
 		const int nh = tc.next(h);
@@ -651,6 +560,8 @@ vector<vec2> computeUV(const TriMesh& m, const TriConnectivity& tc, const Sparse
         return make_pair(Gr, sqrt(area));
     };
 	LSSolver solver(M.m());
+	//LSSolver solver = initRB(m, tc, alpha, compute_jumps0(m, tc, alpha));
+	/*
 	for(int f = 0; f < m.nf(); ++f) {
 		auto [Gr, sqrt_area] = getGradMat(f);
 		for(int i : {0, 1}) for(int j : {0, 1}) Gr[i][j] *= sqrt_area;
@@ -663,25 +574,46 @@ vector<vec2> computeUV(const TriMesh& m, const TriConnectivity& tc, const Sparse
 				solver.add_to_energy(line);
 			}
 		}
+	}*/
+	FOR(h, m.nh()) FOR(d, 2){
+		LinExpr line = M.row(tc.next(h) << 1 | d) - M.row(h << 1 | d);
+		line.emplace_back(Coeff::ONE, - (ffuv[tc.next(h)] - ffuv[h])[d]);
+		solver.add_to_energy(line);
 	}
 	solver.solve();
     vector<vec2> U(m.nh());
 	FOR(d, 2) FOR(h, m.nh()) U[h][d] = M.eval(2*h+d, solver.X);
 	//computeOrientation();
+
+	return U;
 }
 
-
-vector<double> compute_param(const vector<int>& ph2v, const vector<double>& ppoints, const vector<double>& ff_angles){
+vector<double> compute_FF_angles(const TriMesh& m, const TriConnectivity& tc, const vector<bool>& is_feature);
+vector<double> compute_param(const vector<int>& ph2v, const vector<double>& ppoints){ //, const vector<double>& ff_angles
     TriMesh m; m.h2v = ph2v;
     m.points.resize(ppoints.size()/3);
     FOR(i, ppoints.size()) m.points[i/3][i%3] = ppoints[i]; 
     TriConnectivity tc(m);
     FOR(h, m.nh()) if(tc.opp(h) == -1) {prln("There is boundary verts"); break;}
     vector<bool> is_feature(m.nh(), false);
+	
+	const vector<double> ff_angles = compute_FF_angles(m, tc, compute_is_feature(m, tc));
     std::vector<vec2> alpha(m.nf());
-    FOR(f, m.nf()) alpha[f] = { ff_angles[f << 1], ff_angles[(f << 1) | 1] };
+	FOR(f, m.nf()) alpha[f] = { ff_angles[f], ff_angles[f] + M_PI_2 };
+	double edge_size = 0; FOR(h, m.nh()) edge_size += norm(tc.geom(h));  edge_size /= m.nh();
+    //FOR(f, m.nf()) alpha[f] = { ff_angles[f << 1], ff_angles[(f << 1) | 1] };
+	prln("Builder computation :");
     ReductionBuilder builder = initRB(m, tc, alpha, compute_jumps0(m, tc, alpha));
-    vector<vec2> U = computeUV(m, tc, builder.getMatrix(), angles_to_ffuv(m, tc, alpha));
+	auto M = builder.getMatrix();
+	int ml = 0;
+	FOR(i, M.n()) ml = std::max(ml, M.offset[i+1] - M.offset[i]);
+	std::cerr << M.m() << " / " << M.n() << "  nverts: " << m.nh() << "  max len: " << ml << "  nCoeffs: " << M.mat.size() << std::endl;
+	prln("U coordinates computation :");
+    vector<vec2> ffuv = angles_to_ffuv(m, tc, alpha, edge_size);//computeUV(m, tc, builder.getMatrix(), angles_to_ffuv(m, tc, alpha, edge_size));
+	vector<vec2> U = computeUV(m, tc, M, ffuv);
+	prln("Done !");
+	//vector<vec2> U = angles_to_ffuv(m, tc, alpha, edge_size);
+
 
     vector<double> texcoords(m.nh() << 1);
     FOR(h, m.nh()) FOR(i, 2) texcoords[h << 1 | i] = U[h][i];

@@ -57,12 +57,6 @@
  */
 
 
-/*
-    David Desobry
-    18/04/2022
-    I suppressed lines of code to make it more light for my use.
-
-*/
 
 /******* extracted from nl_private.h *******/
 
@@ -8058,6 +8052,72 @@ static NLCRSMatrix* nlGetCurrentCRSMatrix() {
 }
 
 
+
+NLboolean nlInitExtension(const char* extension) {
+    if(!strcmp(extension, "SUPERLU")) {
+        return nlInitExtension_SUPERLU();
+    } else if(!strcmp(extension, "CHOLMOD")) {
+        return nlInitExtension_CHOLMOD();
+    } else if(!strcmp(extension, "ARPACK")) {
+	/* 
+	 * SUPERLU is needed by OpenNL's ARPACK driver
+	 * (factorizes the matrix for the shift-invert spectral
+	 *  transform).
+	 */
+	return nlInitExtension_SUPERLU() && nlInitExtension_ARPACK();
+    } else if(!strcmp(extension, "MKL")) {
+	return nlInitExtension_MKL();
+    } else if(!strcmp(extension, "CUDA")) {
+	return nlInitExtension_CUDA();
+    }
+    return NL_FALSE;
+}
+
+NLboolean nlExtensionIsInitialized(const char* extension) {
+    if(!strcmp(extension, "SUPERLU")) {
+        return nlExtensionIsInitialized_SUPERLU();
+    } else if(!strcmp(extension, "CHOLMOD")) {
+        return nlExtensionIsInitialized_CHOLMOD();
+    } else if(!strcmp(extension, "ARPACK")) {
+	/* 
+	 * SUPERLU is needed by OpenNL's ARPACK driver
+	 * (factorizes the matrix for the shift-invert spectral
+	 *  transform).
+	 */
+	return nlExtensionIsInitialized_SUPERLU() && nlExtensionIsInitialized_ARPACK();
+    } else if(!strcmp(extension, "MKL")) {
+	return nlExtensionIsInitialized_MKL();
+    } else if(!strcmp(extension, "CUDA")) {
+	return nlExtensionIsInitialized_CUDA();
+    }
+    return NL_FALSE;
+}
+
+void nlInitialize(int argc, char** argv) {
+    int i=0;
+    char* ptr=NULL;
+    char extension[255];
+    /* Find all the arguments with the form:
+     * nl:<extension>=true|false
+     * and try to activate the corresponding extensions.
+     */
+    for(i=1; i<argc; ++i) {
+	ptr = strstr(argv[i],"=true");
+	if(!strncmp(argv[i], "nl:", 3) &&
+	   (strlen(argv[i]) > 3) &&
+	   (ptr != NULL)) {
+	    strncpy(extension, argv[i]+3, (size_t)(ptr-argv[i]-3));
+	    extension[(size_t)(ptr-argv[i]-3)] = '\0';
+	    if(nlInitExtension(extension)) {
+		nl_fprintf(stdout,"OpenNL %s: initialized\n", extension);
+	    } else {
+		nl_fprintf(stderr,"OpenNL %s: could not initialize\n", extension);		
+	    }
+	}
+    }
+}
+
+
 /* Get/Set parameters */
 
 void nlSolverParameterd(NLenum pname, NLdouble param) {
@@ -8116,6 +8176,243 @@ void nlSolverParameteri(NLenum pname, NLint param) {
         nlError("nlSolverParameteri","Invalid parameter");
         nl_assert_not_reached;
     }
+    }
+}
+
+void nlGetBooleanv(NLenum pname, NLboolean* params) {
+    switch(pname) {
+    case NL_LEAST_SQUARES: {
+        *params = nlCurrentContext->least_squares;
+    } break;
+    case NL_SYMMETRIC: {
+        *params = nlCurrentContext->symmetric;
+    } break;
+    default: {
+        nlError("nlGetBooleanv","Invalid parameter");
+        nl_assert_not_reached;
+    } 
+    }
+}
+
+void nlGetDoublev(NLenum pname, NLdouble* params) {
+    switch(pname) {
+    case NL_THRESHOLD: {
+        *params = nlCurrentContext->threshold;
+    } break;
+    case NL_OMEGA: {
+        *params = nlCurrentContext->omega;
+    } break;
+    case NL_ERROR: {
+        *params = nlCurrentContext->error;
+    } break;
+    case NL_ELAPSED_TIME: {
+        *params = nlCurrentContext->elapsed_time;        
+    } break;
+    case NL_GFLOPS: {
+        if(nlCurrentContext->elapsed_time == 0) {
+            *params = 0.0;
+        } else {
+            *params = (NLdouble)(nlCurrentContext->flops) /
+                (nlCurrentContext->elapsed_time * 1e9);
+        }
+    } break;
+    default: {
+        nlError("nlGetDoublev","Invalid parameter");
+        nl_assert_not_reached;
+    } 
+    }
+}
+
+void nlGetIntegerv(NLenum pname, NLint* params) {
+    switch(pname) {
+    case NL_SOLVER: {
+        *params = (NLint)(nlCurrentContext->solver);
+    } break;
+    case NL_NB_VARIABLES: {
+        *params = (NLint)(nlCurrentContext->nb_variables);
+    } break;
+    case NL_NB_SYSTEMS: {
+	*params = (NLint)(nlCurrentContext->nb_systems);
+    } break;
+    case NL_LEAST_SQUARES: {
+        *params = (NLint)(nlCurrentContext->least_squares);
+    } break;
+    case NL_MAX_ITERATIONS: {
+        *params = (NLint)(nlCurrentContext->max_iterations);
+    } break;
+    case NL_SYMMETRIC: {
+        *params = (NLint)(nlCurrentContext->symmetric);
+    } break;
+    case NL_USED_ITERATIONS: {
+        *params = (NLint)(nlCurrentContext->used_iterations);
+    } break;
+    case NL_PRECONDITIONER: {
+        *params = (NLint)(nlCurrentContext->preconditioner);        
+    } break;
+    case NL_NNZ: {
+        *params = (NLint)(nlMatrixNNZ(nlCurrentContext->M));
+    } break;
+    default: {
+        nlError("nlGetIntegerv","Invalid parameter");
+        nl_assert_not_reached;
+    } 
+    }
+}
+
+
+void nlGetIntegervL(NLenum pname, NLlong* params) {
+    switch(pname) {
+    case NL_SOLVER: {
+        *params = (NLlong)(nlCurrentContext->solver);
+    } break;
+    case NL_NB_VARIABLES: {
+        *params = (NLlong)(nlCurrentContext->nb_variables);
+    } break;
+    case NL_NB_SYSTEMS: {
+	*params = (NLlong)(nlCurrentContext->nb_systems);
+    } break;
+    case NL_LEAST_SQUARES: {
+        *params = (NLlong)(nlCurrentContext->least_squares);
+    } break;
+    case NL_MAX_ITERATIONS: {
+        *params = (NLlong)(nlCurrentContext->max_iterations);
+    } break;
+    case NL_SYMMETRIC: {
+        *params = (NLlong)(nlCurrentContext->symmetric);
+    } break;
+    case NL_USED_ITERATIONS: {
+        *params = (NLlong)(nlCurrentContext->used_iterations);
+    } break;
+    case NL_PRECONDITIONER: {
+        *params = (NLlong)(nlCurrentContext->preconditioner);        
+    } break;
+    case NL_NNZ: {
+        *params = (NLlong)(nlMatrixNNZ(nlCurrentContext->M));
+    } break;
+    default: {
+        nlError("nlGetIntegervL","Invalid parameter");
+        nl_assert_not_reached;
+    } 
+    }
+}
+
+
+/* Enable / Disable */
+
+void nlEnable(NLenum pname) {
+    switch(pname) {
+	case NL_NORMALIZE_ROWS: {
+	    nl_assert(nlCurrentContext->state != NL_STATE_ROW);
+	    nlCurrentContext->normalize_rows = NL_TRUE;
+	} break;
+	case NL_VERBOSE: {
+	    nlCurrentContext->verbose = NL_TRUE;
+	} break;
+	case NL_VARIABLES_BUFFER: {
+	    nlCurrentContext->user_variable_buffers = NL_TRUE;
+	} break;
+	case NL_NO_VARIABLES_INDIRECTION: {
+	    nlCurrentContext->no_variables_indirection = NL_TRUE;	    
+	} break;
+    default: {
+        nlError("nlEnable","Invalid parameter");        
+        nl_assert_not_reached;
+    }
+    }
+}
+
+void nlDisable(NLenum pname) {
+    switch(pname) {
+	case NL_NORMALIZE_ROWS: {
+	    nl_assert(nlCurrentContext->state != NL_STATE_ROW);
+	    nlCurrentContext->normalize_rows = NL_FALSE;
+	} break;
+	case NL_VERBOSE: {
+	    nlCurrentContext->verbose = NL_FALSE;
+	} break;
+	case NL_VARIABLES_BUFFER: {
+	    nlCurrentContext->user_variable_buffers = NL_FALSE;
+	} break;
+	case NL_NO_VARIABLES_INDIRECTION: {
+	    nlCurrentContext->no_variables_indirection = NL_FALSE;	    
+	} break;
+	default: {
+	    nlError("nlDisable","Invalid parameter");                
+	    nl_assert_not_reached;
+	}
+    }
+}
+
+NLboolean nlIsEnabled(NLenum pname) {
+    NLboolean result = NL_FALSE;
+    switch(pname) {
+	case NL_NORMALIZE_ROWS: {
+	    result = nlCurrentContext->normalize_rows;
+	} break;
+	case NL_VERBOSE: {
+	    result = nlCurrentContext->verbose;
+	} break;
+	case NL_VARIABLES_BUFFER: {
+	    result = nlCurrentContext->user_variable_buffers;
+	} break;
+	case NL_NO_VARIABLES_INDIRECTION: {
+	    result = nlCurrentContext->no_variables_indirection;	    
+	} break;
+	default: {
+	    nlError("nlIsEnables","Invalid parameter");
+	    nl_assert_not_reached;
+	}
+    }
+    return result;
+}
+
+
+/* NL functions */
+
+void  nlSetFunction(NLenum pname, NLfunc param) {
+    switch(pname) {
+    case NL_FUNC_SOLVER:
+        nlCurrentContext->solver_func = (NLSolverFunc)(param);
+        nlCurrentContext->solver = NL_SOLVER_USER;	
+        break;
+    case NL_FUNC_MATRIX:
+	nlDeleteMatrix(nlCurrentContext->M);
+	nlCurrentContext->M = nlMatrixNewFromFunction(
+	    nlCurrentContext->n, nlCurrentContext->n,
+	    (NLMatrixFunc)param
+	);
+        break;
+    case NL_FUNC_PRECONDITIONER:
+	nlDeleteMatrix(nlCurrentContext->P);
+	nlCurrentContext->P = nlMatrixNewFromFunction(
+	    nlCurrentContext->n, nlCurrentContext->n,
+	    (NLMatrixFunc)param
+	);
+        nlCurrentContext->preconditioner = NL_PRECOND_USER;
+        break;
+    case NL_FUNC_PROGRESS:
+        nlCurrentContext->progress_func = (NLProgressFunc)(param);
+        break;
+    default:
+        nlError("nlSetFunction","Invalid parameter");        
+        nl_assert_not_reached;
+    }
+}
+
+void nlGetFunction(NLenum pname, NLfunc* param) {
+    switch(pname) {
+    case NL_FUNC_SOLVER:
+        *param = (NLfunc)(nlCurrentContext->solver_func);
+        break;
+    case NL_FUNC_MATRIX:
+        *param = (NLfunc)(nlMatrixGetFunction(nlCurrentContext->M));
+        break;
+    case NL_FUNC_PRECONDITIONER:
+        *param = (NLfunc)(nlMatrixGetFunction(nlCurrentContext->P));
+        break;
+    default:
+        nlError("nlGetFunction","Invalid parameter");                
+        nl_assert_not_reached;
     }
 }
 
@@ -8680,6 +8977,7 @@ void nlBindBuffer(
     NLenum buffer, NLuint k, void* addr, NLuint stride
 ) {
     nlCheckState(NL_STATE_SYSTEM);    
+    nl_assert(nlIsEnabled(buffer));
     nl_assert(buffer == NL_VARIABLES_BUFFER);
     nl_assert(k<nlCurrentContext->nb_systems);
     if(stride == 0) {
@@ -8689,3 +8987,105 @@ void nlBindBuffer(
     nlCurrentContext->variable_buffer[k].stride = stride;
 }
 
+
+/* Eigen solver */
+
+void nlMatrixMode(NLenum matrix) {
+    NLuint n = 0;
+    NLuint i;
+    nl_assert(
+	nlCurrentContext->state == NL_STATE_SYSTEM ||
+	nlCurrentContext->state == NL_STATE_MATRIX_CONSTRUCTED
+    );
+    nlCurrentContext->state = NL_STATE_SYSTEM;
+    nlCurrentContext->matrix_mode = matrix;
+    nlCurrentContext->current_row = 0;
+    nlCurrentContext->ij_coefficient_called = NL_FALSE;
+    switch(matrix) {
+	case NL_STIFFNESS_MATRIX: {
+	    /* Stiffness matrix is already constructed. */
+	} break ;
+	case NL_MASS_MATRIX: {
+	    if(nlCurrentContext->B == NULL) {
+		for(i=0; i<nlCurrentContext->nb_variables; ++i) {
+		    if(!nlCurrentContext->variable_is_locked[i]) {
+			++n;
+		    }
+		}
+		nlCurrentContext->B = (NLMatrix)(NL_NEW(NLSparseMatrix));
+		nlSparseMatrixConstruct(
+		    (NLSparseMatrix*)(nlCurrentContext->B),
+		    n, n, NL_MATRIX_STORE_ROWS
+		);
+	    }
+	} break ;
+	default:
+	    nl_assert_not_reached;
+    }
+}
+
+
+void nlEigenSolverParameterd(
+    NLenum pname, NLdouble val
+) {
+    switch(pname) {
+	case NL_EIGEN_SHIFT: {
+	    nlCurrentContext->eigen_shift =  val;
+	} break;
+	case NL_EIGEN_THRESHOLD: {
+	    nlSolverParameterd(pname, val);
+	} break;
+	default:
+	    nl_assert_not_reached;
+    }
+}
+
+void nlEigenSolverParameteri(
+    NLenum pname, NLint val
+) {
+    switch(pname) {
+	case NL_EIGEN_SOLVER: {
+	    nlCurrentContext->eigen_solver = (NLenum)val;
+	} break;
+	case NL_SYMMETRIC:
+	case NL_NB_VARIABLES:	    
+	case NL_NB_EIGENS:
+	case NL_EIGEN_MAX_ITERATIONS: {
+	    nlSolverParameteri(pname, val);
+	} break;
+	default:
+	    nl_assert_not_reached;
+    }
+}
+
+void nlEigenSolve() {
+    if(nlCurrentContext->eigen_value == NULL) {
+	nlCurrentContext->eigen_value = NL_NEW_ARRAY(
+	    NLdouble,nlCurrentContext->nb_systems
+	);
+    }
+    
+    nlMatrixCompress(&nlCurrentContext->M);
+    if(nlCurrentContext->B != NULL) {
+	nlMatrixCompress(&nlCurrentContext->B);
+    }
+    
+    switch(nlCurrentContext->eigen_solver) {
+	case NL_ARPACK_EXT:
+	    nlEigenSolve_ARPACK();
+	    break;
+	default:
+	    nl_assert_not_reached;
+    }
+}
+
+double nlGetEigenValue(NLuint i) {
+    nl_debug_assert(i < nlCurrentContext->nb_variables);
+    return nlCurrentContext->eigen_value[i];
+}
+
+void nlSetRowLength(NLuint i, NLuint m) {
+    NLCRSMatrix* M = nlGetCurrentCRSMatrix();
+    nl_assert(M != NULL);
+    nlCRSMatrixPatternSetRowLength(M, i, m);
+}

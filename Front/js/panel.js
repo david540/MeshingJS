@@ -31,8 +31,12 @@ class GuiPanel {
             this.scene.mesh.updateDisplay(this.displayOptions)
         }).bind(this));
         this.actions = this.gui.addFolder('actions');
-        const p_actions = { 'Compute FrameField': (()=> { this.scene.mesh.computeFF(); }).bind(this) };
+        const p_actions = { 
+            'Compute FrameField': (()=> { this.scene.mesh.computeFF(); }).bind(this) ,
+            'Compute Param': (()=> { this.scene.mesh.computeParam(); }).bind(this) 
+        };
         this.actions.add(p_actions, 'Compute FrameField');
+        this.actions.add(p_actions, 'Compute Param');
     }
 };
 
