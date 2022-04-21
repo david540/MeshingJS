@@ -1,5 +1,6 @@
 */node_modules
 Front/build/
 cpp/build/
+cpp/a.out
 Front/examples/
 .vscode

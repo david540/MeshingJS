@@ -420,7 +420,7 @@ vector<int> compute_jumps0(const TriMesh& m, const TriConnectivity& tc, std::vec
 	}
 	prln("Valence :");
     // Compute valences
-	FOR(v, m.points.size()) {
+	FOR(v, m.points.size()) if(tc.v2h[v] != -1){
 		int h = tc.v2h[v], bh=-1, obh=-1;
 		double ind = 2.*M_PI;
 		do {
@@ -590,6 +590,7 @@ vector<vec2> computeUV(const TriMesh& m, const TriConnectivity& tc, const Sparse
 
 vector<double> compute_FF_angles(const TriMesh& m, const TriConnectivity& tc, const vector<bool>& is_feature);
 vector<double> compute_param(const vector<int>& ph2v, const vector<double>& ppoints){ //, const vector<double>& ff_angles
+	clock_t param_start = clock();
     TriMesh m; m.h2v = ph2v;
     m.points.resize(ppoints.size()/3);
     FOR(i, ppoints.size()) m.points[i/3][i%3] = ppoints[i]; 
@@ -617,5 +618,9 @@ vector<double> compute_param(const vector<int>& ph2v, const vector<double>& ppoi
 
     vector<double> texcoords(m.nh() << 1);
     FOR(h, m.nh()) FOR(i, 2) texcoords[h << 1 | i] = U[h][i];
+	
+    clock_t param_end = clock(); double time_taken = double(param_end - param_start) / double(CLOCKS_PER_SEC);
+	cout << "Computation of param took time : "  << time_taken*1000 << "\n";
+
     return texcoords;
 }
