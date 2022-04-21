@@ -8,7 +8,14 @@ Three js permits to modify by hand the frame field topology on the input tri mes
 ![image](https://user-images.githubusercontent.com/25902963/163992931-637d27ba-d674-492c-b73e-d3ace422a3f9.png)
 
 ## To run the project: 
-start by running the server :
+
+Compile cpp (need wasm installation):
+```bash
+cd cpp
+make compile
+```
+
+Run the node js server :
 
 ```bash
 cd Back
