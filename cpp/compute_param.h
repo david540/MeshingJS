@@ -3,6 +3,8 @@
     His github : https://github.com/Nanored4498
 */
 
+#pragma once
+
 #include "common.h"
 
 //#include "computeff.h"
@@ -368,7 +370,7 @@ vector<int> compute_jumps0(const TriMesh& m, const TriConnectivity& tc, std::vec
 	std::vector<int> nz(m.points.size(), 0);
 	for(int v : m.h2v) ++ nz[v];
 	const auto setZero = [&](int h)->void {
-		jumpPJ[h] |= 1;
+		jumpPJ[h] = 1;
 		int v = tc.from(h);
 		if(--nz[v] == 1) Qring.push_back(v);
 	};
@@ -588,8 +590,8 @@ vector<vec2> computeUV(const TriMesh& m, const TriConnectivity& tc, const Sparse
 	return U;
 }
 
-vector<double> compute_FF_angles(const TriMesh& m, const TriConnectivity& tc, const vector<bool>& is_feature);
-vector<double> compute_param(const vector<int>& ph2v, const vector<double>& ppoints){ //, const vector<double>& ff_angles
+pair<vector<vec2>, vector<int>> compute_FF_angles_with_input_topo(const TriMesh& m, const TriConnectivity& tc, const vector<int>& in_valences);
+vector<double> compute_param(const vector<int>& ph2v, const vector<double>& ppoints, const vector<int>& in_valences){ //, const vector<double>& ff_angles
 	clock_t param_start = clock();
     TriMesh m; m.h2v = ph2v;
     m.points.resize(ppoints.size()/3);
@@ -598,9 +600,7 @@ vector<double> compute_param(const vector<int>& ph2v, const vector<double>& ppoi
     FOR(h, m.nh()) if(tc.opp(h) == -1) {prln("There is boundary verts"); break;}
     vector<bool> is_feature(m.nh(), false);
 	
-	const vector<double> ff_angles = compute_FF_angles(m, tc, compute_is_feature(m, tc));
-    std::vector<vec2> alpha(m.nf());
-	FOR(f, m.nf()) alpha[f] = { ff_angles[f], ff_angles[f] + M_PI_2 };
+	auto [alpha, valences] = compute_FF_angles_with_input_topo(m, tc, in_valences);
 	double edge_size = 0; FOR(h, m.nh()) edge_size += norm(tc.geom(h));  edge_size /= m.nh();
     //FOR(f, m.nf()) alpha[f] = { ff_angles[f << 1], ff_angles[(f << 1) | 1] };
 	prln("Builder computation :");

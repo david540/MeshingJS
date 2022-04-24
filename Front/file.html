@@ -26,6 +26,48 @@
 		
 		<script src="build/MeshLib.js"></script>
 		<script src="build/MeshProcessing.js"></script>
+
+		<script type="x-shader/x-vertex" id="vertexshader">
+
+			attribute float size;
+			attribute vec3 customColor;
+			attribute int singu_valence;
+
+			varying vec3 vColor;
+
+			void main() {
+
+				vColor = singu_valence == 4 ? vec3(0., 1, 0) : singu_valence == 5 ? vec3(0., 0., 1.) : singu_valence == 3 ? vec3(1, 0, 0) : vec3(0, 0, 0) ; //customColor;
+
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+				gl_PointSize = size * ( 300.0 / -mvPosition.z );
+
+				gl_Position = projectionMatrix * mvPosition;
+
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentshader">
+
+			uniform vec3 color;
+			uniform sampler2D pointTexture;
+			uniform float alphaTest;
+
+			varying vec3 vColor;
+
+			void main() {
+
+				gl_FragColor = vec4( color * vColor, 1.0 );
+
+				gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+
+				if ( gl_FragColor.a < alphaTest ) discard;
+
+			}
+
+		</script>
 		<script>
 			var Module = {
 			  onRuntimeInitialized: function() {

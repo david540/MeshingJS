@@ -9,6 +9,7 @@ class Mesh {
     constructor(path = './examples/emerald.obj') {
         this.filePath = path
         this.object = new THREE.Group()
+        this.pointGroup = new THREE.Group()
         this.mesh = null
         this.computation_mesh = null
         this.scale_val = 1.
@@ -64,18 +65,51 @@ class Mesh {
     }
 
     computePointsCloud() {
-        const loader = new THREE.TextureLoader();
-        const texture = loader.load( '../examples/disc.png' );
+        //const loader = new THREE.TextureLoader();
+       // const texture = loader.load( '../examples/disc.png' );
+        /*
         const pointsMaterial = new THREE.PointsMaterial( {
             color: new THREE.Color( 255, 0, 0 ),
             map: texture,
             size: 0.01,
             alphaTest: 0.5
+        } );*/
+        const geometry = new THREE.BufferGeometry();
+        const positionAttribute = this.computation_mesh.geometry.getAttribute( 'position' );
+
+        const colors = [];
+        const sizes = [];
+        const singu_valences = [];
+        const color = new THREE.Color();
+        for ( let i = 0, l = positionAttribute.count; i < l; i ++ ) {
+            color.setHSL( 0.01 + 0.1 * ( i / l ), 1.0, 0.5 );
+            color.toArray( colors, i * 3 );
+            sizes[ i ] = 10. / Math.sqrt(positionAttribute.count);
+            singu_valences[i] = 4;
+        }
+        geometry.setAttribute( 'position', positionAttribute );
+        geometry.setAttribute( 'customColor', new THREE.Float32BufferAttribute( colors, 3 ) );
+        geometry.setAttribute( 'size', new THREE.Float32BufferAttribute( sizes, 1 ) );
+        geometry.setAttribute( 'singu_valence', new THREE.Int32BufferAttribute( singu_valences, 1 ) );
+
+        
+        const material = new THREE.ShaderMaterial( {
+            uniforms: {
+                color: { value: new THREE.Color( 0xffffff ) },
+                pointTexture: { value: new THREE.TextureLoader().load( '../examples/disc.png' ) },
+                alphaTest: { value: 0.9 }
+            },
+            vertexShader: document.getElementById( 'vertexshader' ).textContent,
+            fragmentShader: document.getElementById( 'fragmentshader' ).textContent
+
         } );
-        this.pointsCloud = new THREE.Points(this.mesh.geometry, pointsMaterial)
-        this.pointsCloud.name = "pointsCloud";
+        
+        this.pointsCloud = new THREE.Points(geometry, material)
+        //this.pointsCloud.name = "pointsCloud";
         this.recenter_and_rescale(this.pointsCloud)
-        this.object.add(this.pointsCloud);
+        this.pointGroup = new THREE.Group()
+        this.pointGroup.add(this.pointsCloud)
+        this.object.add(this.pointGroup);
     }
 
     updateDisplay(displayOptions) {
@@ -93,11 +127,20 @@ class Mesh {
         if(!this.mesh) return []
         return interfaceUtils.CreateVectorInt(this.computation_mesh.geometry.index.array);
     }
-
     computeFF() {
-        let data = interfaceUtils.ExtractArray(Module.computeFF(this.extractFaceIndices(), this.extractVertices()))
-        const dir_arr = data.slice(0, data.length/2).concat(data.slice(0, data.length/2).map(function(x) {return -x}));
-        const vert_arr = data.slice(data.length/2).concat(data.slice(data.length/2))
+        let data = interfaceUtils.ExtractArray(
+            Module.computeFF(this.extractFaceIndices(), this.extractVertices(), 
+            interfaceUtils.CreateVectorInt(this.pointsCloud.geometry.attributes.singu_valence.array)));
+        
+        const nh = data[0]
+        const nv = data[1]
+        const dir_arr = data.slice(2, 2 + nh * 2).concat(data.slice(2, 2 + nh * 2).map(function(x) {return -x}));
+        const vert_arr = data.slice(2 + nh * 2, 2 + nh * 4).concat(data.slice(2 + nh * 2, 2 + nh * 4))
+        const singu_arr = data.slice(2 + nh * 4, 2 + nh * 4 + nv)
+        this.pointsCloud.geometry.setAttribute( 'singu_valence', new THREE.Int32BufferAttribute( singu_arr, 1 ) );
+        //const attr = this.mesh.pointsCloud.geometry.attributes;
+        //  attr.singu_valence.array[ this.selVert ] --;
+        this.pointsCloud.geometry.attributes.singu_valence.needsUpdate = true;
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(vert_arr), 3 ) );
         geometry.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array(dir_arr), 3 ) );
@@ -107,21 +150,16 @@ class Mesh {
         let helper = new VertexNormalsHelper( mesh, 0.03, new THREE.Color(255, 0, 0), 3 );
         helper.name = "frameField"
         this.object.add(helper)
+
     }
     computeParam() {
-        //let data = interfaceUtils.ExtractArray(Module.computeFF(this.extractFaceIndices(), this.extractVertices()))
         const texture = new THREE.TextureLoader().load( "examples/quad_param.png" );
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set( 1, 1 );
-        console.log(this.mesh.geometry.attributes);
         
-        //let uvs = new Array(this.mesh.geometry.attributes.position.count);
-        //for (var i = 0; i < this.mesh.geometry.attributes.position.count; i ++ ) {
-        //    uvs[2 * i] = (i%3 == 1)
-        //    uvs[2 * i + 1] = (i%3 == 2)
-        //}
-        let uvs = interfaceUtils.ExtractArray(Module.compute_param(this.extractFaceIndices(), this.extractVertices()))
+        let uvs = interfaceUtils.ExtractArray(Module.compute_param(this.extractFaceIndices(), this.extractVertices(), 
+                                    interfaceUtils.CreateVectorInt(this.pointsCloud.geometry.attributes.singu_valence.array)));
         this.mesh.geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
         this.mesh.material = new THREE.MeshLambertMaterial( {  
             transparent: true,

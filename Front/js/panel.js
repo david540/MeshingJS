@@ -3,6 +3,7 @@ import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 class DisplayOptions {
     bIsShowEdges = true;
     bIsShowVerts = true;
+    bSinguEdit = false;
     pointWidth = 1;
 }
 
@@ -17,7 +18,7 @@ class GuiPanel {
 
     init() {
         this.display = this.gui.addFolder('display');
-        const p_disp = { 'show edges': true, 'show points': true, 'point width': 1. };
+        const p_disp = { 'show edges': true, 'show points': true, 'point width': 0.1, 'singu edit' : false };
         this.display.add(p_disp, 'show edges').onChange(((val) => {
             this.displayOptions.bIsShowEdges = val;
             this.scene.mesh.updateDisplay(this.displayOptions)
@@ -26,9 +27,12 @@ class GuiPanel {
             this.displayOptions.bIsShowVerts = val;
             this.scene.mesh.updateDisplay(this.displayOptions)
         }).bind(this));
-        this.display.add(p_disp, 'point width', 0.1, 2, 0.1).onChange(((val)=> {
+        this.display.add(p_disp, 'point width', 0.01, 0.3, 0.01).onChange(((val)=> {
             this.displayOptions.pointWidth = val;
             this.scene.mesh.updateDisplay(this.displayOptions)
+        }).bind(this));
+        this.display.add(p_disp, 'singu edit').onChange(((val) => {
+            this.displayOptions.bSinguEdit = val;
         }).bind(this));
         this.actions = this.gui.addFolder('actions');
         const p_actions = { 

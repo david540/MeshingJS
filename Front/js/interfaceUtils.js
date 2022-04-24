@@ -9,7 +9,16 @@
         vec.push_back(array[i]);
     return vec;
 }
-
+/**
+ * Create a double vector, the vector should be deleted by user
+ * @param {Array} array data to copy into vector
+ */
+ export function CreateVectorFloat( array ){
+    let vec = new Module.VectorFloat();
+    for (let i = 0; i < array.length; ++i)
+        vec.push_back(array[i]);
+    return vec;
+}
 /**
  * Create an Int vector, the vector should be deleted by user
  * @param {Array} array data to copy into vector
@@ -20,10 +29,9 @@
         vec.push_back(array[i]);
     return vec;
 }
-
 /**
  * Create an array from a vector
- * @param {VectorDouble} vector vector to extract data from
+ * @param {VectorFloat} vector vector to extract data from
  */
  export function ExtractArray( vector ){
     let array = [];

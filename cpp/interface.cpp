@@ -14,6 +14,7 @@
 EMSCRIPTEN_BINDINGS(types) {
     emscripten::register_vector<double>("VectorDouble");
     emscripten::register_vector<int>("VectorInt");
+    emscripten::register_vector<float>("VectorFloat");
     emscripten::function("computeFF", &computeFF);
     emscripten::function("compute_param", &compute_param);
 }
